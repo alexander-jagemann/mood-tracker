@@ -59,6 +59,9 @@
         <button onclick="handleAddEntryClick()" class="bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 text-sm font-medium py-2.5 px-4 rounded-lg flex items-center justify-center gap-1.5 transition-colors">
             <span>➕</span> Neuer Eintrag
         </button>
+        <button onclick="syncToMake()" id="btn-sync" class="bg-blue-900 hover:bg-blue-800 border border-blue-700 text-blue-200 text-sm font-medium py-2.5 px-4 rounded-lg flex items-center justify-center gap-1.5 transition-colors">
+    <span>☁️</span> Tagesabschluss (Sync)
+        </button>
         <button onclick="exportToMarkdown()" class="flex-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 text-sm font-medium py-2.5 px-4 rounded-lg transition-colors text-center">
             📥 Woche exportieren (.md)
         </button>
@@ -473,6 +476,51 @@
             initStorage();
             checkBackupReminder();
         };
+
+// Tagesabschluss an Make.com senden
+async function syncToMake() {
+    const WEBHOOK_URL = "https://hook.eu1.make.com/eyt2t91ltrmbq4p1y2s67tog9l4mir37"; // <--- WICHTIG!
+    
+    let archive = JSON.parse(localStorage.getItem('mood_tracker_archive')) || {};
+    let todayEntries = archive[todayKey];
+
+    if (!todayEntries || todayEntries.length === 0) {
+        alert("Keine Einträge für heute vorhanden.");
+        return;
+    }
+
+    const syncBtn = document.getElementById('btn-sync');
+    syncBtn.innerHTML = "⏳ Sende...";
+    syncBtn.disabled = true;
+
+    try {
+        const payload = {
+            datum: todayKey,
+            eintraege: todayEntries
+        };
+
+        const response = await fetch(WEBHOOK_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+            alert("Daten erfolgreich synchronisiert!");
+            syncBtn.innerHTML = "✅ Gesendet";
+        } else {
+            alert("Fehler beim Senden. Status: " + response.status);
+            syncBtn.innerHTML = "☁️ Tagesabschluss (Sync)";
+            syncBtn.disabled = false;
+        }
+    } catch (error) {
+        console.error("Sync Error:", error);
+        alert("Netzwerkfehler beim Senden.");
+        syncBtn.innerHTML = "☁️ Tagesabschluss (Sync)";
+        syncBtn.disabled = false;
+    }
+}
+        
     </script>
 </body>
 </html>
