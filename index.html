@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stimmungs-Tracker (5 Stufen)</title>
+    <!-- Tailwind CSS für minimalistisches Design -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        /* Reizarme Farbtöne */
+        body { background-color: #121214; color: #e4e4e7; font-family: ui-sans-serif, system-ui, sans-serif; }
+        .card { background-color: #1a1a1e; border: 1px solid #2d2d34; }
+        
+        /* 5-Stufen Aktiv-Klassen (Satte, aber gedeckte Farben für das Auge) */
+        .btn-active-1 { background-color: #14532d; border-color: #22c55e; color: #bbf7d0; } /* Dunkelgrün */
+        .btn-active-2 { background-color: #0f766e; border-color: #14b8a6; color: #ccfbf1; } /* Türkis/Hellgrün */
+        .btn-active-3 { background-color: #854d0e; border-color: #eab308; color: #fef08a; } /* Gelb */
+        .btn-active-4 { background-color: #c2410c; border-color: #f97316; color: #ffedd5; } /* Orange */
+        .btn-active-5 { background-color: #991b1b; border-color: #ef4444; color: #fca5a5; } /* Rot */
+    </style>
+</head>
+<body class="p-4 max-w-md mx-auto pb-24">
+
+    <!-- Header -->
+    <header class="mb-6 flex justify-between items-center border-b border-zinc-800 pb-3">
+        <div>
+            <h1 class="text-xl font-bold tracking-tight">Stimmungs-Tracker</h1>
+            <p id="current-date" class="text-xs text-zinc-500 mt-0.5"></p>
+        </div>
+        <!-- Backup Warnung -->
+        <div id="backup-alert" class="hidden text-xs bg-amber-950/40 text-amber-400 border border-amber-800 px-2 py-1 rounded">
+            ⚠️ Export fällig
+        </div>
+    </header>
+
+    <!-- Sektionen für die Tageszeiten -->
+    <main class="space-y-4">
+        
+        <!-- MORGENS -->
+        <section class="card p-4 rounded-xl space-y-3">
+            <h2 class="text-sm font-semibold text-zinc-400 tracking-wide uppercase">🌅 Morgens</h2>
+            <div class="flex gap-1.5">
+                <button onclick="setMood('morgens', '🟢')" id="btn-morgens-1" class="flex-1 py-2 text-center rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-400 text-base transition-all" title="Sehr gut">🟢</button>
+                <button onclick="setMood('morgens', '🦚')" id="btn-morgens-2" class="flex-1 py-2 text-center rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-400 text-base transition-all" title="Gut / Leicht angespannt">🦚</button>
+                <button onclick="setMood('morgens', '🟡')" id="btn-morgens-3" class="flex-1 py-2 text-center rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-400 text-base transition-all" title="Neutral">🟡</button>
+                <button onclick="setMood('morgens', '🍊')" id="btn-morgens-4" class="flex-1 py-2 text-center rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-400 text-base transition-all" title="Belastet / Angespannt">🍊</button>
+                <button onclick="setMood('morgens', '🔴')" id="btn-morgens-5" class="flex-1 py-2 text-center rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-400 text-base transition-all" title="Schlecht / Überfordert">🔴</button>
+            </div>
+            <div class="relative">
+                <textarea id="text-morgens" oninput="saveData()" placeholder="Notiz oder Diktat..." class="w-full h-20 p-2 pr-10 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-300 placeholder-zinc-600 focus:outline-none focus:border-zinc-600 resize-none"></textarea>
+                <button onclick="startDictation('text-morgens')" class="absolute right-2 bottom-3 p-1.5 text-zinc-500 hover:text-zinc-300 focus:outline-none">🎙️</button>
+            </div>
+        </section>
+
+        <!-- MITTAGS -->
+        <section class="card p-4 rounded-xl space-y-3">
+            <h2 class="text-sm font-semibold text-zinc-400 tracking-wide uppercase">☀️ Mittags</h2>
+            <div class="flex gap-1.5">
+                <button onclick="setMood('mittags', '🟢')" id="btn-mittags-1" class="flex-1 py-2 text-center rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-400 text-base transition-all" title="Sehr gut">🟢</button>
+                <button onclick="setMood('mittags', '🦚')" id="btn-mittags-2" class="flex-1 py-2 text-center rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-400 text-base transition-all" title="Gut / Leicht angespannt">🦚</button>
+                <button onclick="setMood('mittags', '🟡')" id="btn-mittags-3" class="flex-1 py-2 text-center rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-400 text-base transition-all" title="Neutral">🟡</button>
+                <button onclick="setMood('mittags', '🍊')" id="btn-mittags-4" class="flex-1 py-2 text-center rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-400 text-base transition-all" title="Belastet / Angespannt">🍊</button>
+                <button onclick="setMood('mittags', '🔴')" id="btn-mittags-5" class="flex-1 py-2 text-center rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-400 text-base transition-all" title="Schlecht / Überfordert">🔴</button>
+            </div>
+            <div class="relative">
+                <textarea id="text-mittags" oninput="saveData()" placeholder="Notiz oder Diktat..." class="w-full h-20 p-2 pr-10 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-300 placeholder-zinc-600 focus:outline-none focus:border-zinc-600 resize-none"></textarea>
+                <button onclick="startDictation('text-mittags')" class="absolute right-2 bottom-3 p-1.5 text-zinc-500 hover:text-zinc-300 focus:outline-none">🎙️</button>
+            </div>
+        </section>
+
+        <!-- ABENDS -->
+        <section class="card p-4 rounded-xl space-y-3">
+            <h2 class="text-sm font-semibold text-zinc-400 tracking-wide uppercase">🌌 Abends</h2>
+            <div class="flex gap-1.5">
+                <button onclick="setMood('abends', '🟢')" id="btn-abends-1" class="flex-1 py-2 text-center rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-400 text-base transition-all" title="Sehr gut">🟢</button>
+                <button onclick="setMood('abends', '🦚')" id="btn-abends-2" class="flex-1 py-2 text-center rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-400 text-base transition-all" title="Gut / Leicht angespannt">🦚</button>
+                <button onclick="setMood('abends', '🟡')" id="btn-abends-3" class="flex-1 py-2 text-center rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-400 text-base transition-all" title="Neutral">🟡</button>
+                <button onclick="setMood('abends', '🍊')" id="btn-abends-4" class="flex-1 py-2 text-center rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-400 text-base transition-all" title="Belastet / Angespannt">🍊</button>
+                <button onclick="setMood('abends', '🔴')" id="btn-abends-5" class="flex-1 py-2 text-center rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-400 text-base transition-all" title="Schlecht / Überfordert">🔴</button>
+            </div>
+            <div class="relative">
+                <textarea id="text-abends" oninput="saveData()" placeholder="Notiz oder Diktat..." class="w-full h-20 p-2 pr-10 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-300 placeholder-zinc-600 focus:outline-none focus:border-zinc-600 resize-none"></textarea>
+                <button onclick="startDictation('text-abends')" class="absolute right-2 bottom-3 p-1.5 text-zinc-500 hover:text-zinc-300 focus:outline-none">🎙️</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Export & Reset Controls -->
+    <footer class="fixed bottom-0 left-0 right-0 p-4 bg-zinc-950/90 border-t border-zinc-800 max-w-md mx-auto flex gap-2">
+        <button onclick="exportToMarkdown()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 text-sm font-medium py-2.5 px-4 rounded-lg transition-colors">
+            📥 Woche exportieren (.md)
+        </button>
+        <button onclick="clearAllData()" class="px-3 bg-zinc-900 text-zinc-600 hover:text-red-400 border border-zinc-800 rounded-lg text-sm transition-colors" title="Daten zurücksetzen">
+            🗑️
+        </button>
+    </footer>
+
+    <script>
+        const today = new Date().toISOString().split('T')[0];
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('current-date').innerText = new Date().toLocaleDateString('de-DE', options);
+
+        let currentDayData = {
+            morgens: { mood: '', text: '' },
+            mittags: { mood: '', text: '' },
+            abends: { mood: '', text: '' }
+        };
+
+        window.onload = function() {
+            loadSavedData();
+            checkBackupReminder();
+        };
+
+        function saveData() {
+            currentDayData.morgens.text = document.getElementById('text-morgens').value;
+            currentDayData.mittags.text = document.getElementById('text-mittags').value;
+            currentDayData.abends.text = document.getElementById('text-abends').value;
+
+            let archive = JSON.parse(localStorage.getItem('mood_tracker_archive')) || {};
+            archive[today] = currentDayData;
+            localStorage.setItem('mood_tracker_archive', JSON.stringify(archive));
+        }
+
+        function loadSavedData() {
+            let archive = JSON.parse(localStorage.getItem('mood_tracker_archive')) || {};
+            if (archive[today]) {
+                currentDayData = archive[today];
+                
+                if(currentDayData.morgens.mood) updateMoodUI('morgens', currentDayData.morgens.mood);
+                if(currentDayData.mittags.mood) updateMoodUI('mittags', currentDayData.mittags.mood);
+                if(currentDayData.abends.mood) updateMoodUI('abends', currentDayData.abends.mood);
+
+                document.getElementById('text-morgens').value = currentDayData.morgens.text || '';
+                document.getElementById('text-mittags').value = currentDayData.mittags.text || '';
+                document.getElementById('text-abends').value = currentDayData.abends.text || '';
+            }
+        }
+
+        function setMood(timeSlot, moodStyle) {
+            currentDayData[timeSlot].mood = moodStyle;
+            updateMoodUI(timeSlot, moodStyle);
+            saveData();
+        }
+
+        function updateMoodUI(timeSlot, moodStyle) {
+            const btn1 = document.getElementById(`btn-${timeSlot}-1`);
+            const btn2 = document.getElementById(`btn-${timeSlot}-2`);
+            const btn3 = document.getElementById(`btn-${timeSlot}-3`);
+            const btn4 = document.getElementById(`btn-${timeSlot}-4`);
+            const btn5 = document.getElementById(`btn-${timeSlot}-5`);
+
+            [btn1, btn2, btn3, btn4, btn5].forEach(b => b.className = "flex-1 py-2 text-center rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-400 text-base");
+
+            if (moodStyle === '🟢') btn1.classList.add('btn-active-1');
+            if (moodStyle === '🦚') btn2.classList.add('btn-active-2');
+            if (moodStyle === '🟡') btn3.classList.add('btn-active-3');
+            if (moodStyle === '🍊') btn4.classList.add('btn-active-4');
+            if (moodStyle === '🔴') btn5.classList.add('btn-active-5');
+        }
+
+        function startDictation(textareaId) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                alert("Die Diktierfunktion wird von diesem Browser nicht unterstützt.");
+                return;
+            }
+
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'de-DE';
+            recognition.interimResults = false;
+
+            const textarea = document.getElementById(textareaId);
+            textarea.placeholder = "Ich höre zu...";
+            recognition.start();
+
+            recognition.onresult = function(event) {
+                const speechResult = event.results[0][0].transcript;
+                textarea.value = textarea.value ? textarea.value + " " + speechResult : speechResult;
+                textarea.placeholder = "Notiz oder Diktat...";
+                saveData();
+            };
+
+            recognition.onspeechend = function() { recognition.stop(); textarea.placeholder = "Notiz oder Diktat..."; };
+            recognition.onerror = function() { textarea.placeholder = "Fehler. Erneut versuchen."; };
+        }
+
+        function exportToMarkdown() {
+            let archive = JSON.parse(localStorage.getItem('mood_tracker_archive')) || {};
+            let markdownContent = `# Stimmungs-Export (Erstellt am ${new Date().toLocaleDateString('de-DE')})\n\n`;
+            
+            let sortedDates = Object.keys(archive).sort((a, b) => new Date(b) - new Date(a));
+
+            if (sortedDates.length === 0) {
+                alert("Es gibt noch keine Daten zum Exportieren.");
+                return;
+            }
+
+            // Text-Mapping für den lesbaren Markdown-Export
+            const moodMap = { '🟢': '🟢 (Sehr gut)', '🦚': '🦚 (Gut / Leicht angespannt)', '🟡': '🟡 (Neutral)', '🍊': '🍊 (Belastet / Angespannt)', '🔴': '🔴 (Schlecht / Überfordert)' };
+
+            sortedDates.forEach(dateStr => {
+                let day = archive[dateStr];
+                let d = new Date(dateStr);
+                let wochentag = d.toLocaleDateString('de-DE', { weekday: 'long' });
+
+                markdownContent += `---\ndatum: ${dateStr}\nwochentag: ${wochentag}\n---\n\n`;
+                markdownContent += `# Tagebucheintrag - ${wochentag}, ${d.toLocaleDateString('de-DE')}\n\n`;
+                
+                markdownContent += `## 🌅 Morgens\n* **Stimmung:** ${moodMap[day.morgens.mood] || 'Keine Angabe'}\n* **Notiz:** ${day.morgens.text || 'Kein Eintrag.'}\n\n`;
+                markdownContent += `## ☀️ Mittags\n* **Stimmung:** ${moodMap[day.mittags.mood] || 'Keine Angabe'}\n* **Notiz:** ${day.mittags.text || 'Kein Eintrag.'}\n\n`;
+                markdownContent += `## 🌌 Abends\n* **Stimmung:** ${moodMap[day.abends.mood] || 'Keine Angabe'}\n* **Notiz:** ${day.abends.text || 'Kein Eintrag.'}\n\n`;
+                markdownContent += `\n`;
+            });
+
+            const blob = new Blob([markdownContent], { type: 'text/markdown;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `stimmungs_export_${today}.md`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            localStorage.setItem('last_export_date', today);
+            document.getElementById('backup-alert').classList.add('hidden');
+        }
+
+        function checkBackupReminder() {
+            const lastExport = localStorage.getItem('last_export_date');
+            if (!lastExport) { document.getElementById('backup-alert').classList.remove('hidden'); return; }
+            const diffDays = Math.ceil(Math.abs(new Date(today) - new Date(lastExport)) / (1000 * 60 * 60 * 24));
+            if (diffDays >= 7) document.getElementById('backup-alert').classList.remove('hidden');
+        }
+
+        function clearAllData() {
+            if (confirm("Wirklich ALLE Einträge unwiderruflich löschen?")) {
+                localStorage.removeItem('mood_tracker_archive');
+                localStorage.removeItem('last_export_date');
+                location.reload();
+            }
+        }
+    </script>
+</body>
+</html>
