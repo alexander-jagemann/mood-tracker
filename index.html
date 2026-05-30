@@ -3,242 +3,513 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stimmungs-Tracker (5 Stufen)</title>
-    <!-- Tailwind CSS für minimalistisches Design -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <title>Mood Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#121214',
+                        darkCard: '#1a1a1e',
+                        darkText: '#e4e4e7',
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        /* Reizarme Farbtöne */
         body { background-color: #121214; color: #e4e4e7; font-family: ui-sans-serif, system-ui, sans-serif; }
         .card { background-color: #1a1a1e; border: 1px solid #2d2d34; }
         
-        /* 5-Stufen Aktiv-Klassen (Satte, aber gedeckte Farben für das Auge) */
-        .btn-active-1 { background-color: #14532d; border-color: #22c55e; color: #bbf7d0; } /* Dunkelgrün */
-        .btn-active-2 { background-color: #0f766e; border-color: #14b8a6; color: #ccfbf1; } /* Türkis/Hellgrün */
-        .btn-active-3 { background-color: #854d0e; border-color: #eab308; color: #fef08a; } /* Gelb */
-        .btn-active-4 { background-color: #c2410c; border-color: #f97316; color: #ffedd5; } /* Orange */
-        .btn-active-5 { background-color: #991b1b; border-color: #ef4444; color: #fca5a5; } /* Rot */
+        /* 5-Stufen Aktiv-Klassen (Numerisch 0 bis 4) */
+        .btn-active-0 { background-color: #14532d; border-color: #22c55e; color: #bbf7d0; } 
+        .btn-active-1 { background-color: #0f766e; border-color: #14b8a6; color: #ccfbf1; } 
+        .btn-active-2 { background-color: #854d0e; border-color: #eab308; color: #fef08a; } 
+        .btn-active-3 { background-color: #c2410c; border-color: #f97316; color: #ffedd5; } 
+        .btn-active-4 { background-color: #991b1b; border-color: #ef4444; color: #fca5a5; }
     </style>
 </head>
-<body class="p-4 max-w-md mx-auto pb-24">
+<body class="p-4 max-w-xl mx-auto pb-28">
 
-    <!-- Header -->
     <header class="mb-6 flex justify-between items-center border-b border-zinc-800 pb-3">
         <div>
-            <h1 class="text-xl font-bold tracking-tight">Stimmungs-Tracker</h1>
+            <h1 class="text-xl font-bold tracking-tight text-zinc-100">Mood Tracker</h1>
             <p id="current-date" class="text-xs text-zinc-500 mt-0.5"></p>
         </div>
-        <!-- Backup Warnung -->
         <div id="backup-alert" class="hidden text-xs bg-amber-950/40 text-amber-400 border border-amber-800 px-2 py-1 rounded">
-            ⚠️ Export fällig
+            ⚠️ Export fällig (>7 Tage)
         </div>
     </header>
 
-    <!-- Sektionen für die Tageszeiten -->
-    <main class="space-y-4">
-        
-        <!-- MORGENS -->
-        <section class="card p-4 rounded-xl space-y-3">
-            <h2 class="text-sm font-semibold text-zinc-400 tracking-wide uppercase">🌅 Morgens</h2>
-            <div class="flex gap-1.5">
-                <button onclick="setMood('morgens', '🟢')" id="btn-morgens-1" class="flex-1 py-2 text-center rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-400 text-base transition-all" title="Sehr gut">🟢</button>
-                <button onclick="setMood('morgens', '🦚')" id="btn-morgens-2" class="flex-1 py-2 text-center rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-400 text-base transition-all" title="Gut / Leicht angespannt">🦚</button>
-                <button onclick="setMood('morgens', '🟡')" id="btn-morgens-3" class="flex-1 py-2 text-center rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-400 text-base transition-all" title="Neutral">🟡</button>
-                <button onclick="setMood('morgens', '🍊')" id="btn-morgens-4" class="flex-1 py-2 text-center rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-400 text-base transition-all" title="Belastet / Angespannt">🍊</button>
-                <button onclick="setMood('morgens', '🔴')" id="btn-morgens-5" class="flex-1 py-2 text-center rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-400 text-base transition-all" title="Schlecht / Überfordert">🔴</button>
-            </div>
-            <div class="relative">
-                <textarea id="text-morgens" oninput="saveData()" placeholder="Notiz oder Diktat..." class="w-full h-20 p-2 pr-10 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-300 placeholder-zinc-600 focus:outline-none focus:border-zinc-600 resize-none"></textarea>
-                <button onclick="startDictation('text-morgens')" class="absolute right-2 bottom-3 p-1.5 text-zinc-500 hover:text-zinc-300 focus:outline-none">🎙️</button>
-            </div>
-        </section>
+    <main id="timeline-container" class="space-y-4">
+        </main>
 
-        <!-- MITTAGS -->
-        <section class="card p-4 rounded-xl space-y-3">
-            <h2 class="text-sm font-semibold text-zinc-400 tracking-wide uppercase">☀️ Mittags</h2>
-            <div class="flex gap-1.5">
-                <button onclick="setMood('mittags', '🟢')" id="btn-mittags-1" class="flex-1 py-2 text-center rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-400 text-base transition-all" title="Sehr gut">🟢</button>
-                <button onclick="setMood('mittags', '🦚')" id="btn-mittags-2" class="flex-1 py-2 text-center rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-400 text-base transition-all" title="Gut / Leicht angespannt">🦚</button>
-                <button onclick="setMood('mittags', '🟡')" id="btn-mittags-3" class="flex-1 py-2 text-center rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-400 text-base transition-all" title="Neutral">🟡</button>
-                <button onclick="setMood('mittags', '🍊')" id="btn-mittags-4" class="flex-1 py-2 text-center rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-400 text-base transition-all" title="Belastet / Angespannt">🍊</button>
-                <button onclick="setMood('mittags', '🔴')" id="btn-mittags-5" class="flex-1 py-2 text-center rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-400 text-base transition-all" title="Schlecht / Überfordert">🔴</button>
-            </div>
-            <div class="relative">
-                <textarea id="text-mittags" oninput="saveData()" placeholder="Notiz oder Diktat..." class="w-full h-20 p-2 pr-10 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-300 placeholder-zinc-600 focus:outline-none focus:border-zinc-600 resize-none"></textarea>
-                <button onclick="startDictation('text-mittags')" class="absolute right-2 bottom-3 p-1.5 text-zinc-500 hover:text-zinc-300 focus:outline-none">🎙️</button>
-            </div>
-        </section>
+    <section class="mt-6 card p-4 rounded-xl space-y-3">
+        <details class="group">
+            <summary class="text-xs font-semibold text-zinc-500 uppercase tracking-wide cursor-pointer list-none flex justify-between items-center">
+                <span>📊 Tagesübersicht & Insights (Optional)</span>
+                <span class="transition group-open:rotate-180">▼</span>
+            </summary>
+            <div class="mt-4 pt-3 border-t border-zinc-800 space-y-2 text-sm text-zinc-400" id="insights-panel">
+                </div>
+        </details>
+    </section>
 
-        <!-- ABENDS -->
-        <section class="card p-4 rounded-xl space-y-3">
-            <h2 class="text-sm font-semibold text-zinc-400 tracking-wide uppercase">🌌 Abends</h2>
-            <div class="flex gap-1.5">
-                <button onclick="setMood('abends', '🟢')" id="btn-abends-1" class="flex-1 py-2 text-center rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-400 text-base transition-all" title="Sehr gut">🟢</button>
-                <button onclick="setMood('abends', '🦚')" id="btn-abends-2" class="flex-1 py-2 text-center rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-400 text-base transition-all" title="Gut / Leicht angespannt">🦚</button>
-                <button onclick="setMood('abends', '🟡')" id="btn-abends-3" class="flex-1 py-2 text-center rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-400 text-base transition-all" title="Neutral">🟡</button>
-                <button onclick="setMood('abends', '🍊')" id="btn-abends-4" class="flex-1 py-2 text-center rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-400 text-base transition-all" title="Belastet / Angespannt">🍊</button>
-                <button onclick="setMood('abends', '🔴')" id="btn-abends-5" class="flex-1 py-2 text-center rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-400 text-base transition-all" title="Schlecht / Überfordert">🔴</button>
-            </div>
-            <div class="relative">
-                <textarea id="text-abends" oninput="saveData()" placeholder="Notiz oder Diktat..." class="w-full h-20 p-2 pr-10 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-300 placeholder-zinc-600 focus:outline-none focus:border-zinc-600 resize-none"></textarea>
-                <button onclick="startDictation('text-abends')" class="absolute right-2 bottom-3 p-1.5 text-zinc-500 hover:text-zinc-300 focus:outline-none">🎙️</button>
-            </div>
-        </section>
-    </main>
-
-    <!-- Export & Reset Controls -->
-    <footer class="fixed bottom-0 left-0 right-0 p-4 bg-zinc-950/90 border-t border-zinc-800 max-w-md mx-auto flex gap-2">
-        <button onclick="exportToMarkdown()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 text-sm font-medium py-2.5 px-4 rounded-lg transition-colors">
+    <footer class="fixed bottom-0 left-0 right-0 p-4 bg-zinc-950/95 border-t border-zinc-800 max-w-xl mx-auto flex gap-2 z-50">
+        <button onclick="handleAddEntryClick()" class="bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 text-sm font-medium py-2.5 px-4 rounded-lg flex items-center justify-center gap-1.5 transition-colors">
+            <span>➕</span> Neuer Eintrag
+        </button>
+        <button onclick="exportToMarkdown()" class="flex-1 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 text-sm font-medium py-2.5 px-4 rounded-lg transition-colors text-center">
             📥 Woche exportieren (.md)
         </button>
-        <button onclick="clearAllData()" class="px-3 bg-zinc-900 text-zinc-600 hover:text-red-400 border border-zinc-800 rounded-lg text-sm transition-colors" title="Daten zurücksetzen">
+        <button onclick="clearAllData()" class="px-3 bg-zinc-950 text-zinc-700 hover:text-red-400 border border-zinc-900 rounded-lg text-sm transition-colors" title="Daten zurücksetzen">
             🗑️
         </button>
     </footer>
 
     <script>
-        const today = new Date().toISOString().split('T')[0];
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        document.getElementById('current-date').innerText = new Date().toLocaleDateString('de-DE', options);
-
-        let currentDayData = {
-            morgens: { mood: '', text: '' },
-            mittags: { mood: '', text: '' },
-            abends: { mood: '', text: '' }
-        };
-
-        window.onload = function() {
-            loadSavedData();
-            checkBackupReminder();
-        };
-
-        function saveData() {
-            currentDayData.morgens.text = document.getElementById('text-morgens').value;
-            currentDayData.mittags.text = document.getElementById('text-mittags').value;
-            currentDayData.abends.text = document.getElementById('text-abends').value;
-
-            let archive = JSON.parse(localStorage.getItem('mood_tracker_archive')) || {};
-            archive[today] = currentDayData;
-            localStorage.setItem('mood_tracker_archive', JSON.stringify(archive));
+        // Lokale Zeitzonen-konforme ISO-String Generierung
+        function getLocalISOString(date) {
+            const tzo = -date.getTimezoneOffset();
+            const dif = tzo >= 0 ? '+' : '-';
+            const pad = function(num) {
+                return (num < 10 ? '0' : '') + num;
+            };
+            return date.getFullYear() +
+                '-' + pad(date.getMonth() + 1) +
+                '-' + pad(date.getDate()) +
+                'T' + pad(date.getHours()) +
+                '-' + pad(date.getMinutes()) +
+                ':' + pad(date.getSeconds()) +
+                dif + pad(Math.floor(Math.abs(tzo) / 60)) +
+                ':' + pad(Math.abs(tzo) % 60);
         }
 
-        function loadSavedData() {
-            let archive = JSON.parse(localStorage.getItem('mood_tracker_archive')) || {};
-            if (archive[today]) {
-                currentDayData = archive[today];
-                
-                if(currentDayData.morgens.mood) updateMoodUI('morgens', currentDayData.morgens.mood);
-                if(currentDayData.mittags.mood) updateMoodUI('mittags', currentDayData.mittags.mood);
-                if(currentDayData.abends.mood) updateMoodUI('abends', currentDayData.abends.mood);
+        const todayKey = new Date().toISOString().split('T')[0];
+        document.getElementById('current-date').innerText = new Date().toLocaleDateString('de-DE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-                document.getElementById('text-morgens').value = currentDayData.morgens.text || '';
-                document.getElementById('text-mittags').value = currentDayData.mittags.text || '';
-                document.getElementById('text-abends').value = currentDayData.abends.text || '';
+        // Globale Referenz für die Spracherkennung
+        let activeRecognition = null;
+        let activeRecordingId = null;
+
+        // Emojis werden strikt als UI-Mapping behandelt
+        const moodEmojis = { 0: '🟢', 1: '🦚', 2: '🟡', 3: '🍊', 4: '🔴' };
+        const moodLabels = { 
+            0: 'Sehr gut / Stabil / Entspannt', 
+            1: 'Gut / Leicht angespannt, aber stabil', 
+            2: 'Neutral / Ausgeglichen / Funktionierend', 
+            3: 'Belastet / Deutliche Anspannung', 
+            4: 'Schlecht / Überfordert / Akute Belastung' 
+        };
+
+        // 1. Initialisierung & Garbage Collection (Bereinigung leerer Datenleichen)
+        function initStorage() {
+            let archive = JSON.parse(localStorage.getItem('mood_tracker_archive')) || {};
+            let cleaned = false;
+
+            // Bereinige das Archiv von komplett leeren Einträgen
+            Object.keys(archive).forEach(date => {
+                if (Array.isArray(archive[date])) {
+                    archive[date] = archive[date].filter(entry => {
+                        const hasText = entry.text && entry.text.trim() !== "";
+                        const hasMood = entry.mood !== null && entry.mood !== undefined && entry.mood !== "";
+                        return hasText || hasMood; 
+                    });
+                    if (archive[date].length === 0) {
+                        delete archive[date];
+                        cleaned = true;
+                    }
+                }
+            });
+
+            if (cleaned || !localStorage.getItem('mood_tracker_archive')) {
+                localStorage.setItem('mood_tracker_archive', JSON.stringify(archive));
+            }
+
+            // Falls für heute noch kein Eintrag existiert, lege automatisch den ersten an
+            if (!archive[todayKey] || archive[todayKey].length === 0) {
+                createNewEntry(true); // silent initial creation
+            } else {
+                renderTimeline();
             }
         }
 
-        function setMood(timeSlot, moodStyle) {
-            currentDayData[timeSlot].mood = moodStyle;
-            updateMoodUI(timeSlot, moodStyle);
-            saveData();
+        // 2. Erstellung eines neuen Events
+        function createNewEntry(silent = false) {
+            let archive = JSON.parse(localStorage.getItem('mood_tracker_archive')) || {};
+            if (!archive[todayKey]) archive[todayKey] = [];
+
+            const now = new Date();
+            const newEntry = {
+                id: now.getTime(),
+                datetime: getLocalISOString(now),
+                mood: null, // Initial kein Wert ausgewählt
+                text: "",
+                tags: [],
+                energy: null
+            };
+
+            archive[todayKey].push(newEntry);
+            localStorage.setItem('mood_tracker_archive', JSON.stringify(archive));
+            
+            if (!silent) {
+                renderTimeline();
+            }
         }
 
-        function updateMoodUI(timeSlot, moodStyle) {
-            const btn1 = document.getElementById(`btn-${timeSlot}-1`);
-            const btn2 = document.getElementById(`btn-${timeSlot}-2`);
-            const btn3 = document.getElementById(`btn-${timeSlot}-3`);
-            const btn4 = document.getElementById(`btn-${timeSlot}-4`);
-            const btn5 = document.getElementById(`btn-${timeSlot}-5`);
-
-            [btn1, btn2, btn3, btn4, btn5].forEach(b => b.className = "flex-1 py-2 text-center rounded-lg border border-zinc-700 bg-zinc-800/50 text-zinc-400 text-base");
-
-            if (moodStyle === '🟢') btn1.classList.add('btn-active-1');
-            if (moodStyle === '🦚') btn2.classList.add('btn-active-2');
-            if (moodStyle === '🟡') btn3.classList.add('btn-active-3');
-            if (moodStyle === '🍊') btn4.classList.add('btn-active-4');
-            if (moodStyle === '🔴') btn5.classList.add('btn-active-5');
+        function handleAddEntryClick() {
+            stopAnyActiveDictation();
+            createNewEntry(false);
         }
 
-        function startDictation(textareaId) {
+        // 3. UI Renderer
+        function renderTimeline() {
+            const container = document.getElementById('timeline-container');
+            container.innerHTML = "";
+            
+            let archive = JSON.parse(localStorage.getItem('mood_tracker_archive')) || {};
+            let entries = archive[todayKey] || [];
+
+            // Chronologisch nach ID (Zeitstempel der Erstellung) sortieren
+            entries.sort((a, b) => a.id - b.id);
+
+            entries.forEach(entry => {
+                const dateObj = new Date(entry.datetime);
+                const hours = String(dateObj.getHours()).padStart(2, '0');
+                const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+                const timeString = `${hours}:${minutes}`;
+
+                const card = document.createElement('div');
+                card.className = "card p-4 rounded-xl space-y-4 relative transition-all";
+                card.id = `card-${entry.id}`;
+
+                // HTML Struktur für einen Timeline-Block
+                card.innerHTML = `
+                    <div class="flex justify-between items-center gap-2">
+                        <div class="flex items-center gap-2">
+                            <input type="time" value="${timeString}" onchange="updateEntryTime(${entry.id}, this.value)" class="bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-sm font-mono text-zinc-300 focus:outline-none focus:border-zinc-600">
+                        </div>
+                        
+                        <button onclick="deleteEntry(${entry.id})" class="text-zinc-600 hover:text-red-400 text-sm p-1 transition-colors" title="Eintrag entfernen">
+                            ✕
+                        </button>
+                    </div>
+
+                    <div class="flex gap-1.5">
+                        ${[0, 1, 2, 3, 4].map(num => `
+                            <button onclick="updateEntryMood(${entry.id}, ${num})" id="btn-${entry.id}-${num}" class="flex-1 py-2 text-center rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-500 text-base transition-all" title="${moodLabels[num]}">
+                                ${moodEmojis[num]}
+                            </button>
+                        `).join('')}
+                    </div>
+
+                    <div class="relative">
+                        <textarea id="text-${entry.id}" oninput="updateEntryText(${entry.id}, this.value)" placeholder="Ereignis notieren oder Mikrofon nutzen..." class="w-full h-24 p-2 pr-10 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-300 placeholder-zinc-600 focus:outline-none focus:border-zinc-600 resize-none"></textarea>
+                        <button onclick="toggleDictation(${entry.id})" id="mic-${entry.id}" class="absolute right-2 bottom-3 p-1.5 text-zinc-500 hover:text-zinc-300 focus:outline-none transition-colors" title="Diktieren starten/stoppen">🎙️</button>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 pt-1">
+                        <div>
+                            <label class="block text-[11px] font-semibold uppercase tracking-wider text-zinc-500 mb-1">Energie (0-10): <span id="energy-val-${entry.id}" class="text-zinc-300 font-mono">${entry.energy !== null ? entry.energy : '--'}</span></label>
+                            <input type="range" min="0" max="10" step="1" value="${entry.energy !== null ? entry.energy : 5}" oninput="updateEntryEnergy(${entry.id}, this.value)" class="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-zinc-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold uppercase tracking-wider text-zinc-500 mb-1">Tags (Komma-getrennt)</label>
+                            <input type="text" value="${(entry.tags || []).join(', ')}" oninput="updateEntryTags(${entry.id}, this.value)" placeholder="z.B. lärm, arbeit" class="w-full px-2 py-0.5 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-zinc-600">
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(card);
+                
+                // Setze Text-Wert direkt, um HTML-Injektions-Artefakte im Textarea zu vermeiden
+                document.getElementById(`text-${entry.id}`).value = entry.text || "";
+                
+                // UI Zustand der Mood-Buttons wiederherstellen
+                if (entry.mood !== null) {
+                    const activeBtn = document.getElementById(`btn-${entry.id}-${entry.mood}`);
+                    if (activeBtn) activeBtn.classList.add(`btn-active-${entry.mood}`);
+                }
+            });
+
+            renderInsights();
+        }
+
+        // 4. Echtzeit Sync-Operationen (Auto-Save Layer)
+        function getArchiveAndEntry(id) {
+            let archive = JSON.parse(localStorage.getItem('mood_tracker_archive')) || {};
+            let entries = archive[todayKey] || [];
+            let entry = entries.find(e => e.id === id);
+            return { archive, entries, entry };
+        }
+
+        function saveArchive(archive) {
+            localStorage.setItem('mood_tracker_archive', JSON.stringify(archive));
+        }
+
+        function updateEntryText(id, val) {
+            const { archive, entry } = getArchiveAndEntry(id);
+            if (entry) {
+                entry.text = val;
+                saveArchive(archive);
+            }
+        }
+
+        function updateEntryMood(id, moodValue) {
+            const { archive, entry } = getArchiveAndEntry(id);
+            if (entry) {
+                entry.mood = moodValue;
+                saveArchive(archive);
+                renderTimeline(); // Neuaufbau aktualisiert Farb-Klassen
+            }
+        }
+
+        function updateEntryEnergy(id, val) {
+            const { archive, entry } = getArchiveAndEntry(id);
+            if (entry) {
+                entry.energy = parseInt(val, 10);
+                document.getElementById(`energy-val-${id}`).innerText = entry.energy;
+                saveArchive(archive);
+            }
+        }
+
+        function updateEntryTags(id, val) {
+            const { archive, entry } = getArchiveAndEntry(id);
+            if (entry) {
+                entry.tags = val.split(',').map(t => t.trim().toLowerCase()).filter(t => t.length > 0);
+                saveArchive(archive);
+            }
+        }
+
+        function updateEntryTime(id, timeVal) {
+            const { archive, entry } = getArchiveAndEntry(id);
+            if (entry && timeVal) {
+                const [hours, minutes] = timeVal.split(':');
+                const dateObj = new Date(entry.datetime);
+                dateObj.setHours(parseInt(hours, 10));
+                dateObj.setMinutes(parseInt(minutes, 10));
+                entry.datetime = getLocalISOString(dateObj);
+                saveArchive(archive);
+            }
+        }
+
+        function deleteEntry(id) {
+            stopAnyActiveDictation();
+            const { archive } = getArchiveAndEntry(id);
+            if (archive[todayKey]) {
+                archive[todayKey] = archive[todayKey].filter(e => e.id !== id);
+                if (archive[todayKey].length === 0) delete archive[todayKey];
+                saveArchive(archive);
+                initStorage(); // Nutzt Fallback-Regel falls Tag leer wird
+            }
+        }
+
+        // 5. Fortlaufende Spracherkennung (Speech-to-Text Setup)
+        function stopAnyActiveDictation() {
+            if (activeRecognition) {
+                activeRecognition.stop();
+                const micBtn = document.getElementById(`mic-${activeRecordingId}`);
+                if (micBtn) micBtn.className = "absolute right-2 bottom-3 p-1.5 text-zinc-500 hover:text-zinc-300 focus:outline-none transition-colors";
+                const textA = document.getElementById(`text-${activeRecordingId}`);
+                if (textA && textA.placeholder === "Ich höre aktiv zu... (Klicken zum Stoppen)") {
+                    textA.placeholder = "Ereignis notieren oder Mikrofon nutzen...";
+                }
+                activeRecognition = null;
+                activeRecordingId = null;
+            }
+        }
+
+        function toggleDictation(id) {
+            if (activeRecordingId === id) {
+                stopAnyActiveDictation();
+                return;
+            }
+
+            stopAnyActiveDictation(); // Stoppe andere laufende Aufnahmen
+
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (!SpeechRecognition) {
-                alert("Die Diktierfunktion wird von diesem Browser nicht unterstützt.");
+                alert("Die Web Speech API wird in diesem Browser nicht unterstützt. Bitte nutze Chrome oder Safari.");
                 return;
             }
 
             const recognition = new SpeechRecognition();
             recognition.lang = 'de-DE';
-            recognition.interimResults = false;
+            recognition.continuous = true;
+            recognition.interimResults = true;
 
-            const textarea = document.getElementById(textareaId);
-            textarea.placeholder = "Ich höre zu...";
-            recognition.start();
+            const textarea = document.getElementById(`text-${id}`);
+            const micBtn = document.getElementById(`mic-${id}`);
+            
+            let oldText = textarea.value;
+            textarea.placeholder = "Ich höre aktiv zu... (Klicken zum Stoppen)";
+            micBtn.className = "absolute right-2 bottom-3 p-1.5 text-red-500 animate-pulse focus:outline-none transition-colors";
 
             recognition.onresult = function(event) {
-                const speechResult = event.results[0][0].transcript;
-                textarea.value = textarea.value ? textarea.value + " " + speechResult : speechResult;
-                textarea.placeholder = "Notiz oder Diktat...";
-                saveData();
+                let interimTranscript = '';
+                let finalTranscript = '';
+
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        finalTranscript += event.results[i][0].transcript + ' ';
+                    } else {
+                        interimTranscript += event.results[i][0].transcript;
+                    }
+                }
+
+                if (finalTranscript) {
+                    oldText = oldText.trim() + " " + finalTranscript.trim();
+                    textarea.value = oldText;
+                    updateEntryText(id, textarea.value);
+                } else if (interimTranscript) {
+                    textarea.value = oldText.trim() + " [" + interimTranscript.trim() + "]";
+                }
             };
 
-            recognition.onspeechend = function() { recognition.stop(); textarea.placeholder = "Notiz oder Diktat..."; };
-            recognition.onerror = function() { textarea.placeholder = "Fehler. Erneut versuchen."; };
+            recognition.onerror = function(e) {
+                console.error("Speech Error:", e);
+                stopAnyActiveDictation();
+            };
+
+            recognition.onend = function() {
+                // Falls nicht extern abgebrochen, Zustand normalisieren
+                if (activeRecordingId === id) {
+                    stopAnyActiveDictation();
+                }
+            };
+
+            activeRecognition = recognition;
+            activeRecordingId = id;
+            recognition.start();
         }
 
-        function exportToMarkdown() {
+        // 6. Leichtgewichtige Micro Insights & Trigger-Erkennung
+        function renderInsights() {
+            const panel = document.getElementById('insights-panel');
             let archive = JSON.parse(localStorage.getItem('mood_tracker_archive')) || {};
-            let markdownContent = `# Stimmungs-Export (Erstellt am ${new Date().toLocaleDateString('de-DE')})\n\n`;
+            let todayEntries = archive[todayKey] || [];
+
+            // Filter für Verteilungen des aktuellen Tages
+            let moodCounts = { 0:0, 1:0, 2:0, 3:0, 4:0 };
+            let validMoodsToday = 0;
+            todayEntries.forEach(e => {
+                if(e.mood !== null) { moodCounts[e.mood]++; validMoodsToday++; }
+            });
+
+            // Letzte 7 Tage Durchschnitt berechnen
+            let totalMoodSum = 0;
+            let totalMoodCount = 0;
+            let allText = "";
             
+            Object.keys(archive).forEach(dateKey => {
+                archive[dateKey].forEach(e => {
+                    if (e.mood !== null) {
+                        totalMoodSum += e.mood;
+                        totalMoodCount++;
+                    }
+                    if (e.text) allText += " " + e.text.toLowerCase();
+                });
+            });
+
+            let globalAvg = totalMoodCount > 0 ? (totalMoodSum / totalMoodCount).toFixed(1) : "--";
+
+            // Einfache Trigger-Erkennung (Keywords scannen)
+            const triggerKeywords = ["lärm", "laut", "stress", "müde", "arbeit", "erschöpft", "ruhe", "schlaf"];
+            let detectedTriggers = [];
+            triggerKeywords.forEach(kw => {
+                if (allText.includes(kw)) detectedTriggers.push(kw);
+            });
+
+            panel.innerHTML = `
+                <div><strong>Stimmungsverteilung heute:</strong> ${validMoodsToday > 0 ? Object.keys(moodCounts).map(m => moodCounts[m] > 0 ? `${moodEmojis[m]}x${moodCounts[m]}` : '').filter(Boolean).join(' | ') : 'Keine Daten'}</div>
+                <div><strong>Historischer Belastungs-Schnitt (0-4):</strong> <span class="font-mono">${globalAvg}</span> <span class="text-[10px] text-zinc-600">(Niedriger ist besser)</span></div>
+                <div><strong>Erkannte Kontext-Muster:</strong> ${detectedTriggers.length > 0 ? detectedTriggers.map(t => `<span class="bg-zinc-800 text-zinc-400 px-1.5 py-0.5 text-xs rounded border border-zinc-700 font-mono">${t}</span>`).join(' ') : 'Keine'}</div>
+            `;
+        }
+
+        // 7. Lokaler Markdown-Export (.md mit YAML Frontmatter)
+        function exportToMarkdown() {
+            stopAnyActiveDictation();
+            let archive = JSON.parse(localStorage.getItem('mood_tracker_archive')) || {};
+            
+            let markdownContent = `---\napp: mood-tracker\nversion: 1\nexported: ${new Date().toISOString().split('T')[0]}\n---\n\n`;
+            
+            // Sortiere Daten rückwirkend (Neueste Tage zuerst)
             let sortedDates = Object.keys(archive).sort((a, b) => new Date(b) - new Date(a));
 
             if (sortedDates.length === 0) {
-                alert("Es gibt noch keine Daten zum Exportieren.");
+                alert("Es sind keine validen Daten zum Exportieren vorhanden.");
                 return;
             }
 
-            // Text-Mapping für den lesbaren Markdown-Export
-            const moodMap = { '🟢': '🟢 (Sehr gut)', '🦚': '🦚 (Gut / Leicht angespannt)', '🟡': '🟡 (Neutral)', '🍊': '🍊 (Belastet / Angespannt)', '🔴': '🔴 (Schlecht / Überfordert)' };
-
             sortedDates.forEach(dateStr => {
-                let day = archive[dateStr];
+                let entries = archive[dateStr] || [];
+                if (entries.length === 0) return;
+
+                // Sortiere Einträge innerhalb des Tages chronologisch nach Erstellung
+                entries.sort((a, b) => a.id - b.id);
+
                 let d = new Date(dateStr);
                 let wochentag = d.toLocaleDateString('de-DE', { weekday: 'long' });
 
-                markdownContent += `---\ndatum: ${dateStr}\nwochentag: ${wochentag}\n---\n\n`;
-                markdownContent += `# Tagebucheintrag - ${wochentag}, ${d.toLocaleDateString('de-DE')}\n\n`;
+                markdownContent += `## ${dateStr} (${wochentag})\n\n`;
                 
-                markdownContent += `## 🌅 Morgens\n* **Stimmung:** ${moodMap[day.morgens.mood] || 'Keine Angabe'}\n* **Notiz:** ${day.morgens.text || 'Kein Eintrag.'}\n\n`;
-                markdownContent += `## ☀️ Mittags\n* **Stimmung:** ${moodMap[day.mittags.mood] || 'Keine Angabe'}\n* **Notiz:** ${day.mittags.text || 'Kein Eintrag.'}\n\n`;
-                markdownContent += `## 🌌 Abends\n* **Stimmung:** ${moodMap[day.abends.mood] || 'Keine Angabe'}\n* **Notiz:** ${day.abends.text || 'Kein Eintrag.'}\n\n`;
-                markdownContent += `\n`;
+                entries.forEach(e => {
+                    const dateObj = new Date(e.datetime);
+                    const hours = String(dateObj.getHours()).padStart(2, '0');
+                    const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+                    const emoji = e.mood !== null ? moodEmojis[e.mood] : '⚪';
+                    const energyStr = e.energy !== null ? `[Energie: ${e.energy}/10]` : '';
+                    const tagsStr = e.tags && e.tags.length > 0 ? ` #${e.tags.join(' #')}` : '';
+                    
+                    markdownContent += `- ${hours}:${minutes} ${emoji} ${e.text || 'Keine Textnotiz.'} ${energyStr}${tagsStr}\n`;
+                });
+                
+                markdownContent += `\n---\n\n`;
             });
 
+            // Datei-Download Trigger
             const blob = new Blob([markdownContent], { type: 'text/markdown;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
             link.setAttribute("href", url);
-            link.setAttribute("download", `stimmungs_export_${today}.md`);
+            link.setAttribute("download", `mood_tracker_backup_${todayKey}.md`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
 
-            localStorage.setItem('last_export_date', today);
+            localStorage.setItem('last_export_date', todayKey);
             document.getElementById('backup-alert').classList.add('hidden');
         }
 
+        // 8. Wöchentlicher Sicherheits-Reminder
         function checkBackupReminder() {
             const lastExport = localStorage.getItem('last_export_date');
-            if (!lastExport) { document.getElementById('backup-alert').classList.remove('hidden'); return; }
-            const diffDays = Math.ceil(Math.abs(new Date(today) - new Date(lastExport)) / (1000 * 60 * 60 * 24));
-            if (diffDays >= 7) document.getElementById('backup-alert').classList.remove('hidden');
+            if (!lastExport) {
+                document.getElementById('backup-alert').classList.remove('hidden');
+                return;
+            }
+            const diffTime = Math.abs(new Date(todayKey) - new Date(lastExport));
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            if (diffDays >= 7) {
+                document.getElementById('backup-alert').classList.remove('hidden');
+            }
         }
 
         function clearAllData() {
-            if (confirm("Wirklich ALLE Einträge unwiderruflich löschen?")) {
-                localStorage.removeItem('mood_tracker_archive');
-                localStorage.removeItem('last_export_date');
+            stopAnyActiveDictation();
+            if (confirm("Möchtest du alle lokalen Daten unwiderruflich löschen? Sichere vorher deine Markdown-Dateien!")) {
+                localStorage.clear();
                 location.reload();
             }
         }
+
+        // Start der Applikation
+        window.onload = function() {
+            initStorage();
+            checkBackupReminder();
+        };
     </script>
 </body>
 </html>
