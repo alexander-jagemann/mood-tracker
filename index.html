@@ -22,7 +22,6 @@
         body { background-color: #121214; color: #e4e4e7; font-family: ui-sans-serif, system-ui, sans-serif; }
         .card { background-color: #1a1a1e; border: 1px solid #2d2d34; }
         
-        /* 5-Stufen Aktiv-Klassen (Numerisch 0 bis 4) */
         .btn-active-0 { background-color: #14532d; border-color: #22c55e; color: #bbf7d0; } 
         .btn-active-1 { background-color: #0f766e; border-color: #14b8a6; color: #ccfbf1; } 
         .btn-active-2 { background-color: #854d0e; border-color: #eab308; color: #fef08a; } 
@@ -69,18 +68,16 @@
     </footer>
 
     <script>
-        // Lokale Zeitzonen-konforme ISO-String Generierung
+        // Korrigierte ISO-String-Generierung (Trennt Zeitkomponenten sauber mit Doppelpunkt)
         function getLocalISOString(date) {
             const tzo = -date.getTimezoneOffset();
             const dif = tzo >= 0 ? '+' : '-';
-            const pad = function(num) {
-                return (num < 10 ? '0' : '') + num;
-            };
+            const pad = function(num) { return (num < 10 ? '0' : '') + num; };
             return date.getFullYear() +
                 '-' + pad(date.getMonth() + 1) +
                 '-' + pad(date.getDate()) +
                 'T' + pad(date.getHours()) +
-                '-' + pad(date.getMinutes()) +
+                ':' + pad(date.getMinutes()) +
                 ':' + pad(date.getSeconds()) +
                 dif + pad(Math.floor(Math.abs(tzo) / 60)) +
                 ':' + pad(Math.abs(tzo) % 60);
@@ -89,11 +86,9 @@
         const todayKey = new Date().toISOString().split('T')[0];
         document.getElementById('current-date').innerText = new Date().toLocaleDateString('de-DE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-        // Globale Referenz für die Spracherkennung
         let activeRecognition = null;
         let activeRecordingId = null;
 
-        // Emojis werden strikt als UI-Mapping behandelt
         const moodEmojis = { 0: '🟢', 1: '🦚', 2: '🟡', 3: '🍊', 4: '🔴' };
         const moodLabels = { 
             0: 'Sehr gut / Stabil / Entspannt', 
@@ -103,12 +98,11 @@
             4: 'Schlecht / Überfordert / Akute Belastung' 
         };
 
-        // 1. Initialisierung & Garbage Collection (Bereinigung leerer Datenleichen)
+        // Initiale Bereinigung läuft NUR beim ersten Laden der App
         function initStorage() {
             let archive = JSON.parse(localStorage.getItem('mood_tracker_archive')) || {};
             let cleaned = false;
 
-            // Bereinige das Archiv von komplett leeren Einträgen
             Object.keys(archive).forEach(date => {
                 if (Array.isArray(archive[date])) {
                     archive[date] = archive[date].filter(entry => {
@@ -127,16 +121,15 @@
                 localStorage.setItem('mood_tracker_archive', JSON.stringify(archive));
             }
 
-            // Falls für heute noch kein Eintrag existiert, lege automatisch den ersten an
+            // Falls leer, erstelle den ersten Eintrag und rendere ihn direkt (verhindert Doppel-Eintrag)
             if (!archive[todayKey] || archive[todayKey].length === 0) {
-                createNewEntry(true); // silent initial creation
+                createNewEntry(false); 
             } else {
                 renderTimeline();
             }
         }
 
-        // 2. Erstellung eines neuen Events
-        function createNewEntry(silent = false) {
+        function createNewEntry(render = true) {
             let archive = JSON.parse(localStorage.getItem('mood_tracker_archive')) || {};
             if (!archive[todayKey]) archive[todayKey] = [];
 
@@ -144,7 +137,7 @@
             const newEntry = {
                 id: now.getTime(),
                 datetime: getLocalISOString(now),
-                mood: null, // Initial kein Wert ausgewählt
+                mood: null, 
                 text: "",
                 tags: [],
                 energy: null
@@ -153,17 +146,16 @@
             archive[todayKey].push(newEntry);
             localStorage.setItem('mood_tracker_archive', JSON.stringify(archive));
             
-            if (!silent) {
+            if (render) {
                 renderTimeline();
             }
         }
 
         function handleAddEntryClick() {
             stopAnyActiveDictation();
-            createNewEntry(false);
+            createNewEntry(true);
         }
 
-        // 3. UI Renderer
         function renderTimeline() {
             const container = document.getElementById('timeline-container');
             container.innerHTML = "";
@@ -171,26 +163,29 @@
             let archive = JSON.parse(localStorage.getItem('mood_tracker_archive')) || {};
             let entries = archive[todayKey] || [];
 
-            // Chronologisch nach ID (Zeitstempel der Erstellung) sortieren
             entries.sort((a, b) => a.id - b.id);
 
             entries.forEach(entry => {
                 const dateObj = new Date(entry.datetime);
-                const hours = String(dateObj.getHours()).padStart(2, '0');
-                const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+                
+                // Fallback falls Datums-Parsing fehlschlägt
+                let hours = "00";
+                let minutes = "00";
+                if (!isNaN(dateObj.getTime())) {
+                    hours = String(dateObj.getHours()).padStart(2, '0');
+                    minutes = String(dateObj.getMinutes()).padStart(2, '0');
+                }
                 const timeString = `${hours}:${minutes}`;
 
                 const card = document.createElement('div');
                 card.className = "card p-4 rounded-xl space-y-4 relative transition-all";
                 card.id = `card-${entry.id}`;
 
-                // HTML Struktur für einen Timeline-Block
                 card.innerHTML = `
                     <div class="flex justify-between items-center gap-2">
                         <div class="flex items-center gap-2">
                             <input type="time" value="${timeString}" onchange="updateEntryTime(${entry.id}, this.value)" class="bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-sm font-mono text-zinc-300 focus:outline-none focus:border-zinc-600">
                         </div>
-                        
                         <button onclick="deleteEntry(${entry.id})" class="text-zinc-600 hover:text-red-400 text-sm p-1 transition-colors" title="Eintrag entfernen">
                             ✕
                         </button>
@@ -222,21 +217,17 @@
                 `;
 
                 container.appendChild(card);
-                
-                // Setze Text-Wert direkt, um HTML-Injektions-Artefakte im Textarea zu vermeiden
                 document.getElementById(`text-${entry.id}`).value = entry.text || "";
                 
-                // UI Zustand der Mood-Buttons wiederherstellen
                 if (entry.mood !== null) {
                     const activeBtn = document.getElementById(`btn-${entry.id}-${entry.mood}`);
-                    if (activeBtn) activeBtn.classList.add(`btn-active-${entry.mood}`);
+                    if (activeBtn) activeBtn.className = `flex-1 py-2 text-center rounded-lg border btn-active-${entry.mood} text-base transition-all`;
                 }
             });
 
             renderInsights();
         }
 
-        // 4. Echtzeit Sync-Operationen (Auto-Save Layer)
         function getArchiveAndEntry(id) {
             let archive = JSON.parse(localStorage.getItem('mood_tracker_archive')) || {};
             let entries = archive[todayKey] || [];
@@ -250,10 +241,7 @@
 
         function updateEntryText(id, val) {
             const { archive, entry } = getArchiveAndEntry(id);
-            if (entry) {
-                entry.text = val;
-                saveArchive(archive);
-            }
+            if (entry) { entry.text = val; saveArchive(archive); }
         }
 
         function updateEntryMood(id, moodValue) {
@@ -261,7 +249,7 @@
             if (entry) {
                 entry.mood = moodValue;
                 saveArchive(archive);
-                renderTimeline(); // Neuaufbau aktualisiert Farb-Klassen
+                renderTimeline(); 
             }
         }
 
@@ -287,83 +275,83 @@
             if (entry && timeVal) {
                 const [hours, minutes] = timeVal.split(':');
                 const dateObj = new Date(entry.datetime);
-                dateObj.setHours(parseInt(hours, 10));
-                dateObj.setMinutes(parseInt(minutes, 10));
-                entry.datetime = getLocalISOString(dateObj);
-                saveArchive(archive);
+                if (!isNaN(dateObj.getTime())) {
+                    dateObj.setHours(parseInt(hours, 10));
+                    dateObj.setMinutes(parseInt(minutes, 10));
+                    entry.datetime = getLocalISOString(dateObj);
+                    saveArchive(archive);
+                }
             }
         }
 
+        // Korrigierte Löschfunktion (Isoliert, ohne globale Bereinigung zu triggern)
         function deleteEntry(id) {
             stopAnyActiveDictation();
-            const { archive } = getArchiveAndEntry(id);
+            let archive = JSON.parse(localStorage.getItem('mood_tracker_archive')) || {};
             if (archive[todayKey]) {
                 archive[todayKey] = archive[todayKey].filter(e => e.id !== id);
-                if (archive[todayKey].length === 0) delete archive[todayKey];
-                saveArchive(archive);
-                initStorage(); // Nutzt Fallback-Regel falls Tag leer wird
+                if (archive[todayKey].length === 0) {
+                    delete archive[todayKey];
+                    saveArchive(archive);
+                    createNewEntry(true); // Erzeuge direkt wieder einen sauberen Start-Eintrag
+                } else {
+                    saveArchive(archive);
+                    renderTimeline();
+                }
             }
         }
 
-        // 5. Fortlaufende Spracherkennung (Speech-to-Text Setup)
         function stopAnyActiveDictation() {
             if (activeRecognition) {
                 activeRecognition.stop();
                 const micBtn = document.getElementById(`mic-${activeRecordingId}`);
                 if (micBtn) micBtn.className = "absolute right-2 bottom-3 p-1.5 text-zinc-500 hover:text-zinc-300 focus:outline-none transition-colors";
                 const textA = document.getElementById(`text-${activeRecordingId}`);
-                if (textA && textA.placeholder === "Ich höre aktiv zu... (Klicken zum Stoppen)") {
-                    textA.placeholder = "Ereignis notieren oder Mikrofon nutzen...";
-                }
+                if (textA) textA.placeholder = "Ereignis notieren oder Mikrofon nutzen...";
                 activeRecognition = null;
                 activeRecordingId = null;
             }
         }
 
+        // Stabilisierte Diktierfunktion ohne Verdopplungs-Bug
         function toggleDictation(id) {
             if (activeRecordingId === id) {
                 stopAnyActiveDictation();
                 return;
             }
 
-            stopAnyActiveDictation(); // Stoppe andere laufende Aufnahmen
+            stopAnyActiveDictation(); 
 
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (!SpeechRecognition) {
-                alert("Die Web Speech API wird in diesem Browser nicht unterstützt. Bitte nutze Chrome oder Safari.");
+                alert("Die Web Speech API wird in diesem Browser nicht unterstützt.");
                 return;
             }
 
             const recognition = new SpeechRecognition();
             recognition.lang = 'de-DE';
             recognition.continuous = true;
-            recognition.interimResults = true;
+            // interimResults deaktiviert: Verhindert Text-Wiederholungen auf mobilen Browsern
+            recognition.interimResults = false; 
 
             const textarea = document.getElementById(`text-${id}`);
             const micBtn = document.getElementById(`mic-${id}`);
             
-            let oldText = textarea.value;
             textarea.placeholder = "Ich höre aktiv zu... (Klicken zum Stoppen)";
             micBtn.className = "absolute right-2 bottom-3 p-1.5 text-red-500 animate-pulse focus:outline-none transition-colors";
 
             recognition.onresult = function(event) {
-                let interimTranscript = '';
                 let finalTranscript = '';
-
                 for (let i = event.resultIndex; i < event.results.length; ++i) {
                     if (event.results[i].isFinal) {
                         finalTranscript += event.results[i][0].transcript + ' ';
-                    } else {
-                        interimTranscript += event.results[i][0].transcript;
                     }
                 }
-
                 if (finalTranscript) {
-                    oldText = oldText.trim() + " " + finalTranscript.trim();
-                    textarea.value = oldText;
+                    const currentText = textarea.value;
+                    // Fügt neuen Text sauber an die bestehende Eingabe an
+                    textarea.value = (currentText.trim() + " " + finalTranscript.trim()).trim();
                     updateEntryText(id, textarea.value);
-                } else if (interimTranscript) {
-                    textarea.value = oldText.trim() + " [" + interimTranscript.trim() + "]";
                 }
             };
 
@@ -373,7 +361,6 @@
             };
 
             recognition.onend = function() {
-                // Falls nicht extern abgebrochen, Zustand normalisieren
                 if (activeRecordingId === id) {
                     stopAnyActiveDictation();
                 }
@@ -384,42 +371,33 @@
             recognition.start();
         }
 
-        // 6. Leichtgewichtige Micro Insights & Trigger-Erkennung
         function renderInsights() {
             const panel = document.getElementById('insights-panel');
             let archive = JSON.parse(localStorage.getItem('mood_tracker_archive')) || {};
             let todayEntries = archive[todayKey] || [];
 
-            // Filter für Verteilungen des aktuellen Tages
             let moodCounts = { 0:0, 1:0, 2:0, 3:0, 4:0 };
             let validMoodsToday = 0;
             todayEntries.forEach(e => {
                 if(e.mood !== null) { moodCounts[e.mood]++; validMoodsToday++; }
             });
 
-            // Letzte 7 Tage Durchschnitt berechnen
             let totalMoodSum = 0;
             let totalMoodCount = 0;
             let allText = "";
             
             Object.keys(archive).forEach(dateKey => {
                 archive[dateKey].forEach(e => {
-                    if (e.mood !== null) {
-                        totalMoodSum += e.mood;
-                        totalMoodCount++;
-                    }
+                    if (e.mood !== null) { totalMoodSum += e.mood; totalMoodCount++; }
                     if (e.text) allText += " " + e.text.toLowerCase();
                 });
             });
 
             let globalAvg = totalMoodCount > 0 ? (totalMoodSum / totalMoodCount).toFixed(1) : "--";
 
-            // Einfache Trigger-Erkennung (Keywords scannen)
             const triggerKeywords = ["lärm", "laut", "stress", "müde", "arbeit", "erschöpft", "ruhe", "schlaf"];
             let detectedTriggers = [];
-            triggerKeywords.forEach(kw => {
-                if (allText.includes(kw)) detectedTriggers.push(kw);
-            });
+            triggerKeywords.forEach(kw => { if (allText.includes(kw)) detectedTriggers.push(kw); });
 
             panel.innerHTML = `
                 <div><strong>Stimmungsverteilung heute:</strong> ${validMoodsToday > 0 ? Object.keys(moodCounts).map(m => moodCounts[m] > 0 ? `${moodEmojis[m]}x${moodCounts[m]}` : '').filter(Boolean).join(' | ') : 'Keine Daten'}</div>
@@ -428,14 +406,10 @@
             `;
         }
 
-        // 7. Lokaler Markdown-Export (.md mit YAML Frontmatter)
         function exportToMarkdown() {
             stopAnyActiveDictation();
             let archive = JSON.parse(localStorage.getItem('mood_tracker_archive')) || {};
-            
             let markdownContent = `---\napp: mood-tracker\nversion: 1\nexported: ${new Date().toISOString().split('T')[0]}\n---\n\n`;
-            
-            // Sortiere Daten rückwirkend (Neueste Tage zuerst)
             let sortedDates = Object.keys(archive).sort((a, b) => new Date(b) - new Date(a));
 
             if (sortedDates.length === 0) {
@@ -446,30 +420,27 @@
             sortedDates.forEach(dateStr => {
                 let entries = archive[dateStr] || [];
                 if (entries.length === 0) return;
-
-                // Sortiere Einträge innerhalb des Tages chronologisch nach Erstellung
                 entries.sort((a, b) => a.id - b.id);
 
                 let d = new Date(dateStr);
                 let wochentag = d.toLocaleDateString('de-DE', { weekday: 'long' });
-
                 markdownContent += `## ${dateStr} (${wochentag})\n\n`;
                 
                 entries.forEach(e => {
                     const dateObj = new Date(e.datetime);
-                    const hours = String(dateObj.getHours()).padStart(2, '0');
-                    const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+                    let hours = "00", minutes = "00";
+                    if (!isNaN(dateObj.getTime())) {
+                        hours = String(dateObj.getHours()).padStart(2, '0');
+                        minutes = String(dateObj.getMinutes()).padStart(2, '0');
+                    }
                     const emoji = e.mood !== null ? moodEmojis[e.mood] : '⚪';
                     const energyStr = e.energy !== null ? `[Energie: ${e.energy}/10]` : '';
                     const tagsStr = e.tags && e.tags.length > 0 ? ` #${e.tags.join(' #')}` : '';
-                    
                     markdownContent += `- ${hours}:${minutes} ${emoji} ${e.text || 'Keine Textnotiz.'} ${energyStr}${tagsStr}\n`;
                 });
-                
                 markdownContent += `\n---\n\n`;
             });
 
-            // Datei-Download Trigger
             const blob = new Blob([markdownContent], { type: 'text/markdown;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
@@ -483,29 +454,21 @@
             document.getElementById('backup-alert').classList.add('hidden');
         }
 
-        // 8. Wöchentlicher Sicherheits-Reminder
         function checkBackupReminder() {
             const lastExport = localStorage.getItem('last_export_date');
-            if (!lastExport) {
-                document.getElementById('backup-alert').classList.remove('hidden');
-                return;
-            }
-            const diffTime = Math.abs(new Date(todayKey) - new Date(lastExport));
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            if (diffDays >= 7) {
-                document.getElementById('backup-alert').classList.remove('hidden');
-            }
+            if (!lastExport) { document.getElementById('backup-alert').classList.remove('hidden'); return; }
+            const diffDays = Math.ceil(Math.abs(new Date(todayKey) - new Date(lastExport)) / (1000 * 60 * 60 * 24));
+            if (diffDays >= 7) document.getElementById('backup-alert').classList.remove('hidden');
         }
 
         function clearAllData() {
             stopAnyActiveDictation();
-            if (confirm("Möchtest du alle lokalen Daten unwiderruflich löschen? Sichere vorher deine Markdown-Dateien!")) {
+            if (confirm("Möchtest du alle lokalen Daten unwiderruflich löschen?")) {
                 localStorage.clear();
                 location.reload();
             }
         }
 
-        // Start der Applikation
         window.onload = function() {
             initStorage();
             checkBackupReminder();
